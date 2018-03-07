@@ -1,0 +1,54 @@
+---
+- name: Creating MediaServer group
+  group:
+    name: "{{ mediaserver_group.name }}"
+    gid: "{{ mediaserver_group.gid }}"
+    system: true
+    state: present
+
+- name: Create app users to MediaServer group
+  user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    home: "{{ item.home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  with_items: "{{ users }}"
+
+- name: Configuring docker files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - {src: "docker-compose.yml",dest: "{{ root_folder }}/docker-compose.yml"}
+    
+- name: Stoping all docker CI images
+  docker_service:
+    project_name: mediaserver
+    project_src: "{{ root_folder }}/"
+    state: absent
+  become: true
+
+- name: Bulding and Running docker CI images (Can take several minutes)
+  docker_service:
+    project_name: mediaserver
+    project_src: "{{ root_folder }}/"
+    pull: yes
+    recreate: always
+    state: present
+  become: true
+
+- name: Checking all services
+  assert:
+    that:
+      - "sonarr-fr.mediaserver_sonarr-fr_1.state.running"
+      - "sonarr.mediaserver_sonarr_1.state.running"
+      - "plexpy.mediaserver_plexpy_1.state.running"
+      - "jackett.mediaserver_jackett_1.state.running"
+      - "deluge.mediaserver_deluge_1.state.running"
+      - "muximux.mediaserver_muximux_1.state.running"
+      - "datamanager.mediaserver_datamanager_1.state.running"
+      - "radarr.mediaserver_radarr_1.state.running"
+      - "nginx.mediaserver_nginx_1.state.running"
+      - "plex.mediaserver_plex_1.state.running"
+      

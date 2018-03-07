@@ -1,0 +1,121 @@
+version: '2'
+services:
+  nginx:
+    image: nginx
+    ports:
+    - 80:80
+    volumes:
+    - /home/nginx:/etc/nginx
+    depends_on:
+    - sonarr-fr
+    - sonarr
+    - plexpy
+    - jackett
+    - deluge
+    - muximux
+    - datamanager
+    - radarr
+
+  datamanager:
+    image: gprime44/amazondatamanager
+    environment:
+      PUID: '0'
+      PGID: '0'
+    volumes:
+    - /home/amazon_data_manager/config:/config
+    - /home/data:/data
+
+  sonarr-fr:
+    environment:
+      PUID: '0'
+      PGID: '0'
+      TZ: Europe/Paris
+    image: linuxserver/sonarr
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /home/sonarr_fr/config:/config
+    - /home/data/sorted/tvshows_fr:/tv
+    - /home/deluge/downloads:/downloads
+    - /home/deluge/tvshows_fr:/toscan
+  
+  plexpy:
+    environment:
+      PGID: '992'
+      PUID: '993'
+      TZ: Europe/Paris
+    image: linuxserver/plexpy
+    volumes:
+    - /home/plexpy/config:/config
+    - /home/plex/config/Library/Application Support/Plex Media Server/Logs:/logs:ro
+  
+  jackett:
+    environment:
+      PGID: '994'
+      PUID: '995'
+      TZ: Europe/Paris
+    volumes:
+    - /home/jackett/config:/config
+    - /home/jackett/downloads:/downloads
+    - /etc/localtime:/etc/localtime:ro
+    image: linuxserver/jackett
+
+  radarr:
+    environment:
+      PGID: '0'
+      PUID: '0'
+      TZ: Europe/Paris
+    image: linuxserver/radarr
+    volumes:
+    - /home/radarr/config:/config
+    - /home/deluge/downloads:/downloads
+    - /home/data/sorted/movies:/movies
+    - /etc/localtime:/etc/localtime:ro
+  
+  sonarr:
+    environment:
+      PUID: '0'
+      PGID: '0'
+      TZ: Europe/Paris
+    image: linuxserver/sonarr
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /home/sonarr/config:/config
+    - /home/data/sorted/tvshows:/tv
+    - /home/deluge/downloads:/downloads
+    - /home/deluge/tvshows:/toscan
+  
+  plex:
+    environment:
+      VERSION: latest
+      PUID: '0'
+      PGID: '0'
+      TZ: Europe/Paris
+    image: linuxserver/plex
+    network_mode: host
+    volumes:
+    - /home/plex/config:/config
+    - /home/plex/transcode:/transcode
+    - /home/data/sorted/tvshows:/data/tvshows
+    - /home/data/sorted/tvshows_fr:/data/tvshows_fr
+    - /home/data/sorted/movies:/data/movies
+    - /home/data/sorted/musics:/data/musics
+    - /home/test_unencoded/:/test
+  
+  deluge:
+    environment:
+      PUID: '1003'
+      PGID: '1003'
+      TZ: Europe/Paris
+    image: linuxserver/deluge
+    volumes:
+    - /home/deluge/downloads:/downloads
+    - /home/deluge/config:/config
+  
+  muximux:
+    environment:
+      PGID: '998'
+      PUID: '999'
+      TZ: Europe/Paris
+    image: linuxserver/muximux
+    volumes:
+    - /home/muximux/config:/config

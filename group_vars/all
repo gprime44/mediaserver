@@ -1,0 +1,48 @@
+---
+root_folder: /home
+
+mediaserver_group:
+  name: mediaserver
+  gid: 
+
+users:
+  sonarr-fr:
+    name: sonarr-fr
+    home: /home/sonarr-fr
+    uid:
+  sonarr:
+    name: sonarr
+    home: /home/sonarr
+    uid:
+  plexpy:
+    name: plexpy
+    home: /home/plexpy
+    uid:
+  jackett:
+    name: jackett
+    home: /home/jackett
+    uid:
+  deluge:
+    name: deluge
+    home: /home/deluge
+    uid:
+  muximux: muximux
+    name:muximux
+    home: /home/muximux
+    uid:
+  datamanager:
+    name: datamanager
+    home: /home/datamanager
+    uid:
+  radarr:
+    name: radarr
+    home: /home/radarr
+    uid:
+  nginx:
+    name: nginx
+    home: /home/nginx
+    uid:
+  plex:
+    name: plex
+    home: /home/plex
+    uid:
