@@ -1,0 +1,301 @@
+version: '3.4'
+
+networks:
+  traefik-net:
+
+configs:
+  traefik.toml:
+    file: {{ traefik.config_path }}/traefik.toml
+  datamanager.properties:
+    file: {{ datamanager.config_path }}/application.properties
+
+volumes:
+  traefik_acme:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ traefik.config_path }}/acme
+
+  data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ data.root_path }}
+  tvshows_fr:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ data.tvshows_fr_path }}
+  tvshows:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ data.tvshows_path }}
+  movies:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ data.movies_path }}
+
+  downloads:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ deluge.downloads_path }}
+
+  sonarr_fr_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ sonarr_fr.config_path }}
+
+  plexpy_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ plexpy.config_path }}
+
+  plex_log:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ plex.log_path }}
+  plex_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ plex.config_path }}
+  plex_transcode:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+
+  jackett_data:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  jackett_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ jackett.config_path }}
+
+  radarr_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ radarr.config_path }}
+
+  deluge_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ deluge.config_path }}
+
+  muximux_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: {{ muximux.config_path }}
+
+services:
+#####################################################################
+### Traefik #########################################################
+#####################################################################
+  traefik:
+    image: traefik
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - traefik-net
+    configs:
+      - source: traefik.toml
+        target: /etc/traefik/traefik.toml
+    volumes:
+      - traefik_acme:/etc/traefik/acme/
+
+#####################################################################
+### Data Manager ####################################################
+#####################################################################
+  datamanager:
+    image: gprime44/amazondatamanager
+    environment:
+      PUID: "{{ user_datamanager.uid }}"
+      PGID: "{{ group_media.gid }}"
+    networks:
+      - traefik-net
+    configs:
+      - source: datamanager.properties
+        target: /config/application.properties
+    volumes:
+    - data:/data
+    labels:
+    - traefik.enable=true
+    - traefik.backend=datamanager
+    - traefik.frontend.rule=Host:{{ default_host }}; PathPrefixStrip: /datamanger
+    - traefik.port=8080
+
+#####################################################################
+### Sonar FR ########################################################
+#####################################################################
+  sonarr-fr:
+    image: linuxserver/sonarr
+    environment:
+      PUID: "{{ user_sonarr_fr.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - sonarr_fr_data:/config
+    - tvshows_fr:/tv
+    - downloads:/downloads
+    labels:
+    - traefik.enable=true
+    - traefik.backend=sonarr_fr
+    - traefik.frontend.rule=Host:{{ default_host }}; PathPrefixStrip: /sonarr_fr
+    - traefik.port=8989
+  
+#####################################################################
+### PlexPy ##########################################################
+#####################################################################
+  plexpy:
+    image: linuxserver/plexpy
+    environment:
+      PUID: "{{ user_plexpy.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    volumes:
+    - plexpy_data:/config
+    - plex_log:/logs:ro
+    labels:
+    - traefik.enable=true
+    - traefik.backend=plexpy
+    - traefik.frontend.rule=Host:{{ default_host }}; PathPrefixStrip: /plexpy
+    - traefik.port=8181
+  
+#####################################################################
+### Jackett #########################################################
+#####################################################################
+  jackett:
+    image: linuxserver/jackett
+    environment:
+      PUID: "{{ user_jackett.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    volumes:
+    - jackett_config:/config
+    - jackett_data:/downloads
+    - /etc/localtime:/etc/localtime:ro
+    labels:
+    - traefik.enable=true
+    - traefik.backend=jackett
+    - traefik.frontend.rule=Host:{{ default_host }}; PathPrefixStrip: /jackett
+    - traefik.port=9117
+
+#####################################################################
+### Radarr #########################################################
+#####################################################################
+  radarr:
+    image: linuxserver/radarr
+    environment:
+      PUID: "{{ user_radarr.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    volumes:
+    - radarr_config:/config
+    - downloads:/downloads
+    - movies:/movies
+    - /etc/localtime:/etc/localtime:ro
+    labels:
+    - traefik.enable=true
+    - traefik.backend=radarr
+    - traefik.frontend.rule=Host:{{ default_host }}; PathPrefixStrip: /radarr
+    - traefik.port=7878
+  
+#####################################################################
+### Sonarr VO #######################################################
+#####################################################################
+  sonarr:
+    image: linuxserver/sonarr
+    environment:
+      PUID: "{{ user_sonarr.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - sonarr_config:/config
+    - tvshows:/tv
+    - downloads:/downloads
+    labels:
+    - traefik.enable=true
+    - traefik.backend=sonarr
+    - traefik.frontend.rule=Host:{{ default_host }}; PathPrefixStrip: /sonarr
+    - traefik.port=8989
+  
+#####################################################################
+### Plex ############################################################
+#####################################################################
+  plex:
+    image: linuxserver/plex
+    environment:
+      VERSION: latest
+      PUID: "{{ user_plex.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    network_mode: host
+    volumes:
+    - plex_config:/config
+    - plex_transcode:/transcode
+    - tvshows:/data/tvshows
+    - tvshows_fr:/data/tvshows_fr
+    - movies:/data/movies
+
+#####################################################################
+### Deluge ##########################################################
+#####################################################################
+  deluge:
+    image: linuxserver/deluge
+    environment:
+      PUID: "{{ user_deluge.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    volumes:
+    - downloads:/downloads
+    - deluge_config:/config
+    labels:
+    - traefik.enable=true
+    - traefik.backend=deluge
+    - traefik.frontend.rule=Host:{{ default_host }}; PathPrefixStrip: /deluge
+    - traefik.port=8112
+
+#####################################################################
+### Muximux #########################################################
+#####################################################################
+  muximux:
+    image: linuxserver/muximux
+    environment:
+      PUID: "{{ user_muximux.uid }}"
+      PGID: "{{ group_media.gid }}"
+      TZ: Europe/Paris
+    volumes:
+    - muximux_config:/config
+    labels:
+    - traefik.enable=true
+    - traefik.backend=radarr
+    - traefik.frontend.rule=Host:{{ default_host }}
+    - traefik.port=80

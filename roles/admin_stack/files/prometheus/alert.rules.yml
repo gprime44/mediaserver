@@ -1,0 +1,100 @@
+groups:
+  - name: global
+    rules:  
+    - alert: high_load
+      expr: node_load1 > 0.5
+      for: 5m
+      annotations:
+        summary: "Instance {{ $labels.instance }} under high load"
+        description: "{{ $labels.instance }} of job {{ $labels.job }} is under high load."
+
+    - alert: high_cpu_usage_on_node
+      expr: sum(rate(process_cpu_seconds_total[5m])) by (instance) * 100 > 70
+      for: 5m
+      annotations:
+        summary: "HIGH CPU USAGE WARNING ON '{{ $labels.instance }}'"
+        description: "{{ $labels.instance }} is using a LOT of CPU. CPU usage is {{ humanize $value}}%."
+
+    - alert: high_memory_usage_on_node
+      expr: ((node_memory_MemTotal-node_memory_MemAvailable)/node_memory_MemTotal)*100 > 80
+      for: 5m
+      annotations:
+        summary: "HIGH MEMORY USAGE WARNING TASK ON '{{ $labels.host }}'"
+        description: "{{ $labels.instance }} is using a LOT of MEMORY. MEMORY usage is over {{ humanize $value}}%."
+    
+    - alert: high_la_usage_on_node
+      expr: node_load5 > 5
+      for: 5m
+      annotations:
+        summary: "HIGH LOAD AVERAGE WARNING ON '{{ $labels.instance }}'"
+        description: "{{ $labels.instance }} has a high load average. Load Average 5m is {{ humanize $value}}."
+
+    - alert: monitoring_service_down
+      expr: up == 0
+      for: 5m
+      annotations:
+        summary: "MONITORING SERVICE DOWN WARNING: NODE '{{ $labels.host }}'"
+        description: "The monitoring service '{{ $labels.job }}' is down."
+
+    - alert: node_running_out_of_disk_space
+      expr: (node_filesystem_size{mountpoint="/"} - node_filesystem_free{mountpoint="/"}) * 100/ node_filesystem_size{mountpoint="/"} > 80
+      for: 5m
+      annotations:
+        summary: "LOW DISK SPACE WARING: NODE '{{ $labels.host }}'"
+        description: "More than 80% of disk used. Disk usage {{ humanize $value }}%."
+
+    - alert: disk_will_fill_in_8_hours
+      expr: predict_linear(node_filesystem_free{mountpoint="/"}[1h], 8*3600) < 0
+      for: 5m
+      annotations:
+        summary: "DISK SPACE FULL IN 8 HOURS: NODE '{{ $labels.host }}'"
+        description: "{{ $labels.instance }} is writing a lot."
+
+    - alert: high_cpu_usage_on_container
+      expr: sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_swarm_task_name=~".+"}[5m])) by (container_label_com_docker_swarm_task_name,instance) * 100 > 200
+      for: 5m
+      annotations:
+        summary: "HIGH CPU USAGE WARNING: TASK '{{ $labels.container_label_com_docker_swarm_task_name }}' on '{{ $labels.instance }}'"
+        description: "{{ $labels.container_label_com_docker_swarm_task_name }} is using a LOT of CPU. CPU usage is {{ humanize $value}}%."
+
+    - alert: container_eating_memory
+      expr: sum(container_memory_rss{container_label_com_docker_swarm_task_name=~".+"}) by (instance,name) > 2500000000
+      for: 5m
+      annotations:
+        summary: "HIGH MEMORY USAGE WARNING: TASK '{{ $labels.container_label_com_docker_swarm_task_name }}' on '{{ $labels.instance }}'"
+        description: "{{ $labels.container_label_com_docker_swarm_task_name }} is eating up a LOT of memory. Memory consumption of {{ $labels.container_label_com_docker_swarm_task_name }} is at {{ humanize $value}}."
+
+    - alert: site_down
+      expr: probe_success == 0
+      for: 5m
+      annotations:
+        description: "{{$labels.instance}} has been down for more than 10 minutes."
+        summary: "{{$labels.instance}} down"
+
+    - alert: missing_docker_exporter 
+      expr: count(container_last_seen{container_label_com_docker_swarm_service_name="swarm_services_docker-exporter"}) < count(swarm_node_info)
+      for: 5m
+      annotations:
+        summary: "A container a docker exporter is missing"
+        description: "A docker-expoter container is not running on a host"
+    
+    - alert: missing_node_exporter 
+      expr: count(container_last_seen{container_label_com_docker_swarm_service_name="swarm_services_node-exporter"}) < count(swarm_node_info)
+      for: 5m
+      annotations:
+        summary: "A container a node exporter is missing"
+        description: "A node-expoter container is not running on a host"
+
+    - alert: missing_cadvisor
+      expr: count(container_last_seen{container_label_com_docker_swarm_service_name="swarm_services_cadvisor"}) < count(swarm_node_info)
+      for: 5m
+      annotations:
+        summary: "A container a node exporter is missing"
+        description: "A node-expoter container is not running on a host"
+
+    - alert: container_not_in_running_state
+      expr: sum(container_tasks_state{state!="running"}) by (container_label_com_docker_stack_namespace) > 0
+      for: 5m
+      annotations:
+        summary: "Container not in running state in stack '{{ $labels.container_label_com_docker_swarm_task_name }}' on '{{ $labels.instance }}'"
+        description: "{{ $labels.container_label_com_docker_swarm_task_name }} has a container not in running state on {{ $labels.instance }}"

@@ -15,3 +15,15 @@
   roles:
     - { role: docker }
     - { role: docker-compose }
+
+- name: Deploy media stack
+  hosts: all
+  become: true
+  roles:
+    - { role: media_stack }
+
+- name: Deploy admin stack
+  hosts: all
+  become: true
+  roles:
+    - { role: admin_stack }

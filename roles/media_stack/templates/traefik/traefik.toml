@@ -1,0 +1,55 @@
+debug = false
+logLevel = "info"
+
+defaultEntryPoints = ["http", "https"]
+
+[accessLog]
+format = "json"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[docker]
+domain = "{{ app_domain }}"
+endpoint = "tcp://{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}:2376"
+watch = true
+exposedbydefault = false
+swarmmode = true
+  [docker.tls]
+  ca = "/run/secrets/swarm_ca"
+  cert = "/run/secrets/swarm_cert"
+  key = "/run/secrets/swarm_key"
+  insecureskipverify = true
+
+[acme]
+email = "{{ admin_email }}"
+storage = "/etc/traefik/acme/acme.json"
+entryPoint = "https"
+acmeLogging = true
+onHostRule = true
+  [acme.httpChallenge]
+  entryPoint = "http"
+  
+  [[acme.domains]]
+  main = "{{ portainer_host }}"
+  [[acme.domains]]
+  main = "{{ prometheus_host }}"
+  [[acme.domains]]
+  main = "{{ alertmanager_host }}"
+  [[acme.domains]]
+  main = "{{ grafana_host }}"
+  [[acme.domains]]
+  main = "{{ kibana_host }}"
+  [[acme.domains]]
+  main = "{{ unsee_host }}"
+  
+[metrics]
+  [metrics.prometheus]
+  entryPoint = "traefik"
+  buckets = [0.1,0.3,1.2,5.0]

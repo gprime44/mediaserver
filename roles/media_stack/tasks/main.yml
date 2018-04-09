@@ -1,0 +1,133 @@
+---
+- name: Creating MediaServer group
+  group:
+    name: "{{ mediaserver_group.name }}"
+    system: true
+    state: present
+  register: group_media
+
+- name: Create sonarr-fr user
+  user:
+    name: "{{ sonarr_fr.user_name }}"}"
+    home: "{{ sonarr_fr.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_sonarr_fr
+
+- name: Create sonarr user
+  user:
+    name: "{{ sonarr.user_name }}"}"
+    home: "{{ sonarr.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_sonarr
+
+- name: Create plexpy user
+  user:
+    name: "{{ plexpy.user_name }}"}"
+    home: "{{ plexpy.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_plexpy
+
+- name: Create jackett user
+  user:
+    name: "{{ jackett.user_name }}"}"
+    home: "{{ jackett.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_jackett
+
+- name: Create deluge user
+  user:
+    name: "{{ deluge.user_name }}"}"
+    home: "{{ deluge.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_deluge
+
+- name: Create muximux user
+  user:
+    name: "{{ muximux.user_name }}"}"
+    home: "{{ muximux.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_muximux
+
+- name: Create datamanager user
+  user:
+    name: "{{ datamanager.user_name }}"}"
+    home: "{{ datamanager.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_datamanager
+
+- name: Create radarr user
+  user:
+    name: "{{ radarr.user_name }}"}"
+    home: "{{ radarr.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_radarr
+
+- name: Create plex user
+  user:
+    name: "{{ plex.user_name }}"}"
+    home: "{{ plex.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_plex
+
+- name: Create traefik user
+  user:
+    name: "{{ traefik.user_name }}"}"
+    home: "{{ traefik.user_home }}"
+    group: "{{ mediaserver_group.name }}"
+    system: true
+  register: user_traefik
+
+- name: Check folder
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ docker.config_path }}"
+
+- name: Configuring files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - {src: "docker/docker-compose.yml",dest: "{{ docker.config_path }}/docker-compose-media.yml"}
+    - {src: "traefik/traefik.toml",dest: "{{ traefik.config_path }}/traefik.toml"}
+    
+- name: Stoping all docker CI images
+  docker_service:
+    project_name: media_stack
+    project_src: "{{ docker.config_path }}"
+    files: docker-compose-media.yml
+    state: absent
+
+- name: Bulding and Running docker CI images (Can take several minutes)
+  docker_service:
+    project_name: media_stack
+    project_src: "{{ docker.config_path }}"
+    pull: yes
+    recreate: always
+    state: present
+  become: true
+
+- name: Checking all services
+  assert:
+    that:
+      - "sonarr-fr.media_stack_sonarr-fr_1.state.running"
+      - "sonarr.media_stack_sonarr_1.state.running"
+      - "plexpy.media_stack_plexpy_1.state.running"
+      - "jackett.media_stack_jackett_1.state.running"
+      - "deluge.media_stack_deluge_1.state.running"
+      - "muximux.media_stack_muximux_1.state.running"
+      - "datamanager.media_stack_datamanager_1.state.running"
+      - "radarr.media_stack_radarr_1.state.running"
+      - "traefik.media_stack_traefik_1.state.running"
+      - "plex.media_stack_plex_1.state.running"
+      

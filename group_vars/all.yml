@@ -1,0 +1,74 @@
+---
+
+data:
+  root_path: /home/data
+  main_path: {{ data.root_path }}/sorted
+  tvshows_fr_path: {{ data.main_path }}/tvshows_fr
+  tvshows_path: {{ data.main_path }}/tvshows
+  movies_path: {{ data.main_path }}/movies
+  
+  local:
+    encoded_path: {{ data.root_path }}/.local-sorted
+    decoded_path: {{ data.root_path }}/local-sorted
+  
+  remote:
+    encoded_path: {{ data.root_path }}/.drive-sorted
+    decoded_path: {{ data.root_path }}/drive-sorted
+
+mediaserver_group:
+  name: mediaserver
+
+sonarr_fr:
+  user_name: sonarr_fr
+  user_home: /home/sonarr_fr
+  config_path: {{ sonarr_fr.user_home }}/config
+
+sonarr:
+  user_name: sonarr
+  user_home: /home/sonarr
+  config_path: {{ sonarr.user_home }}/config
+
+plexpy:
+  user_name: plexpy
+  user_home: /home/plexpy
+  config_path: "{{ plexpy.user_home }}/config"
+
+jackett:
+  user_name: jackett
+  user_home: /home/jackett
+  config_path: "{{ jackett.user_home }}/config"
+
+deluge:
+  user_name: deluge
+  user_home: /home/deluge
+  downloads_path: "{{ deluge.user_home }}/downloads"
+  config_path: "{{ deluge.user_home }}/config"
+
+muximux: muximux
+  user_name: muximux
+  user_home: /home/muximux
+  config_path: "{{ muximux.user_home }}/config"
+
+datamanager:
+  user_name: datamanager
+  user_home: /home/datamanager
+  config_path: "{{ datamanager.user_home }}/config"
+
+radarr:
+  user_name: radarr
+  user_home: /home/radarr
+  config_path: "{{ radarr.user_home }}/config"
+
+plex:
+  user_name: plex
+  user_home: /home/plex
+  log_path: "{{ plex.config_path }}/Library/Application Support/Plex Media Server/Logs"
+  config_path: "{{ plex.user_home }}/config"
+
+traefik:
+  user_name: traefik
+  user_home: /home/traefik
+  config_path: "{{ traefik.user_home }}/config"
+
+docker:
+  config_path: /home/docker/config"
