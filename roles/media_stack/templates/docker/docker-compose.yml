@@ -3,19 +3,13 @@ version: '3.4'
 networks:
   traefik-net:
 
-configs:
-  traefik.toml:
-    file: {{ traefik.config_path }}/traefik.toml
-  datamanager.properties:
-    file: {{ datamanager.config_path }}/application.properties
-
 volumes:
   traefik_acme:
     driver: local
     driver_opts:
       o: bind
       type: none
-      device: {{ traefik.config_path }}/acme
+      device: {{ traefik.config_path }}
 
   data:
     driver: local
@@ -121,13 +115,12 @@ services:
     ports:
       - 80:80
       - 443:443
+      - 8080:8080
     networks:
       - traefik-net
-    configs:
-      - source: traefik.toml
-        target: /etc/traefik/traefik.toml
     volumes:
-      - traefik_acme:/etc/traefik/acme/
+      - traefik_config:/etc/traefik
+      - /var/run/docker.sock:/var/run/docker.sock
 
 #####################################################################
 ### Data Manager ####################################################

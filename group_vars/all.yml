@@ -1,5 +1,8 @@
 ---
 
+app_domain: sharedmediaserver.ddns.net
+admin_email: guillaume.prime@gmail.com
+
 data:
   root_path: /home/data
   main_path: {{ data.root_path }}/sorted
